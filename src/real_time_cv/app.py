@@ -1,34 +1,27 @@
 import cv2
-from flask import Flask, Response, request, render_template
+import streamlit as st
+from streamlit_webrtc import webrtc_streamer
+from stream import FromFileVideoStreamTrack
 
-app = Flask(__name__)
 
-def process_frame(frame):
-    gray_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    return gray_frame
+# Main streamlit application
+def main():
+    st.title("Video Stream from File")
 
-def generate_frames(video_file):
-    video_capture = cv2.VideoCapture(video_file)
-    while True:
-        ret, frame = video_capture.read()
-        if not ret:
-            video_capture.set(cv2.CAP_PROP_POS_FRAMES, 0)
-            continue
-        processed_frame = process_frame(frame)
-        ret, buffer = cv2.imencode('.jpg', processed_frame)
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + buffer.tobytes() + b'\r\n')
+    # Select video file
+    video_file = "/home/piotr/github/real_time_cv/test.mp4"
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+    if video_file is not None:
+        # Create video track from the selected file
+        video_track = FromFileVideoStreamTrack(video_file)#VideoFileTrack(video_file)
 
-@app.route('/video_feed', methods=['POST'])
-def video_feed():
-    video_file = request.files['video']
-    video_file.save('uploaded_video.mp4')
-    return Response(generate_frames('uploaded_video.mp4'),
-                    mimetype='multipart/x-mixed-replace; boundary=frame')
+        # Create WebRTC streamer
+        webrtc_streamer(
+            key="video-file-stream",
+            source_video_track=video_track,
+            media_stream_constraints={"video": True, "audio": False},
+        )
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+# Run the application
+if __name__ == "__main__":
+    main()
