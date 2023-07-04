@@ -1,7 +1,14 @@
+"""This module implements streams that can be used with webrtc_streamer."""
+
 import cv2
 from aiortc.mediastreams import VideoStreamTrack
 from av import VideoFrame
 
+
+class Dummy(VideoStreamTrack):
+    def __init__(self) -> None:
+        super().__init__()
+        
 
 class FromFileVideoStreamTrack(VideoStreamTrack):
     """
