@@ -8,13 +8,12 @@ class FromFileVideoStreamTrack(VideoStreamTrack):
     Generate frames from video file.
     """
     def __init__(self, filename):
-        super().__init__()  # don't forget this!
+        super().__init__()
         self.filename = filename
         self.cap = cv2.VideoCapture(filename)
 
     async def recv(self):
         pts, time_base = await self.next_timestamp()
-        print(pts)
         _, frame = self.cap.read()
         if frame is None:
             self.cap.set(cv2.CAP_PROP_POS_FRAMES, 0)  # Reset frame position
