@@ -23,6 +23,11 @@ available_processors = {
     "convert2gray": convert2gray,
 }
 
+from aiortc.contrib.media import MediaPlayer #Mo
+from functools import partial
+
+
+
 
 # Main streamlit application
 def main():
@@ -38,13 +43,14 @@ def main():
             temp_file.write(video_file.read())
             temp_file.close()
             # Create video track from the saved file
-            video_track = FromFileVideoStreamTrack(temp_file.name)
-
+            video_track = FromFileVideoStreamTrack(temp_file.name) # To albo to
+            looped_player_factory = partial(MediaPlayer, file=temp_file.name, loop=True)
             # Create WebRTC streamer
             webrtc_streamer(
                 key="video-file-stream",
                 mode=WebRtcMode.RECVONLY,
-                source_video_track=video_track,
+                # source_video_track=video_track,
+                player_factory=looped_player_factory,
                 media_stream_constraints={"video": True, "audio": False},
                 video_frame_callback=processor,
                 rtc_configuration=COMMON_RTC_CONFIG,
