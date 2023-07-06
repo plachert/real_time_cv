@@ -4,6 +4,7 @@ from stream import FromFileVideoStreamTrack
 import tempfile
 import av
 import cv2
+import time
 
 
 def identity(frame: av.VideoFrame) -> av.VideoFrame:
@@ -12,6 +13,7 @@ def identity(frame: av.VideoFrame) -> av.VideoFrame:
 def convert2gray(frame: av.VideoFrame) -> av.VideoFrame:
         image = frame.to_ndarray(format="bgr24")
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        time.sleep(1)
         return av.VideoFrame.from_ndarray(gray, format="gray")
         
         
@@ -22,34 +24,43 @@ available_processors = {
 
 
 def main():
-    st.title("Video Stream from File")
     method = st.sidebar.radio('Select stream', options=['Webcam', 'File'])
-    processor_name = st.sidebar.selectbox("Select Processor:", list(available_processors.keys())) 
-    processor = available_processors[processor_name]
+    processor_names = st.sidebar.multiselect("Select Processors:", list(available_processors.keys())) 
+    
     if method == "File":
-        # Create video track from the selected file
-        video_file = st.file_uploader("Upload a video file", type=["mp4", "avi"])
-        if video_file is not None:
-            temp_file = tempfile.NamedTemporaryFile(delete=False)
-            temp_file.write(video_file.read())
-            temp_file.close()
-            video_track = FromFileVideoStreamTrack(temp_file.name)
-            webrtc_streamer(
-                key="video-file-stream",
-                mode=WebRtcMode.RECVONLY,
-                source_video_track=video_track,
-                media_stream_constraints={"video": True, "audio": False},
-                video_frame_callback=processor,
-                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
-        )
-    else:
-        webrtc_streamer(
-            key="camera-stream",
-            source_video_track=None,
+        video_file = st.sidebar.file_uploader("Upload a video file", type=["mp4", "avi"])
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        temp_file.write(video_file.read())
+        temp_file.close()
+        video_track = FromFileVideoStreamTrack(temp_file.name)
+        ctx = webrtc_streamer(
+            key="stream-org",
+            mode=WebRtcMode.RECVONLY,
+            source_video_track=video_track,
+            desired_playing_state=True,
             media_stream_constraints={"video": True, "audio": False},
-            video_frame_callback=processor,
             rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            )
+    else:
+        ctx = webrtc_streamer(
+            key="stream-org",
+            source_video_track=None,
+            desired_playing_state=True,
+            media_stream_constraints={"video": True, "audio": False},
+            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            )
+    for i, processor_name in enumerate(processor_names):
+        processor = available_processors[processor_name]
+        webrtc_streamer(
+            key=f"stream-{processor_name}",
+            mode=WebRtcMode.RECVONLY,
+            video_frame_callback=processor,
+            source_video_track=ctx.output_video_track,
+            desired_playing_state=ctx.state.playing,
+            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            media_stream_constraints={"video": True, "audio": False},
         )
+
 
 # Run the application
 if __name__ == "__main__":
