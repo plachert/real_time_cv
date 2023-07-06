@@ -12,13 +12,14 @@ DESIRED_PLAYING_STATE = True
 
 
 def identity(frame: av.VideoFrame) -> av.VideoFrame:
-        return frame
+    return frame
 
 def convert2gray(frame: av.VideoFrame) -> av.VideoFrame:
-        image = frame.to_ndarray(format="bgr24")
-        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        time.sleep(1)
-        return av.VideoFrame.from_ndarray(gray, format="gray")
+    
+    image = frame.to_ndarray(format="bgr24")
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    time.sleep(1)
+    return av.VideoFrame.from_ndarray(gray, format="gray")
         
         
 available_processors = {
