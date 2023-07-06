@@ -7,6 +7,10 @@ import cv2
 import time
 
 
+ICE_CONFIG = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+DESIRED_PLAYING_STATE = True
+
+
 def identity(frame: av.VideoFrame) -> av.VideoFrame:
         return frame
 
@@ -37,17 +41,17 @@ def main():
             key="stream-org",
             mode=WebRtcMode.RECVONLY,
             source_video_track=video_track,
-            desired_playing_state=True,
+            desired_playing_state=DESIRED_PLAYING_STATE,
             media_stream_constraints={"video": True, "audio": False},
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            rtc_configuration=ICE_CONFIG,
             )
     else:
         ctx = webrtc_streamer(
             key="stream-org",
             source_video_track=None,
-            desired_playing_state=True,
+            desired_playing_state=DESIRED_PLAYING_STATE,
             media_stream_constraints={"video": True, "audio": False},
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            rtc_configuration=ICE_CONFIG,
             )
     for i, processor_name in enumerate(processor_names):
         processor = available_processors[processor_name]
@@ -57,7 +61,7 @@ def main():
             video_frame_callback=processor,
             source_video_track=ctx.output_video_track,
             desired_playing_state=ctx.state.playing,
-            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
+            rtc_configuration=ICE_CONFIG,
             media_stream_constraints={"video": True, "audio": False},
         )
 
