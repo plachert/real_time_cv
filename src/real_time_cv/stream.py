@@ -5,11 +5,6 @@ from aiortc.mediastreams import VideoStreamTrack
 from av import VideoFrame
 
 
-class Dummy(VideoStreamTrack):
-    def __init__(self) -> None:
-        super().__init__()
-        
-
 class FromFileVideoStreamTrack(VideoStreamTrack):
     """
     Generate frames from video file.

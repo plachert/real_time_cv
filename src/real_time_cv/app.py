@@ -1,13 +1,10 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
-from stream import FromFileVideoStreamTrack, Dummy
+from stream import FromFileVideoStreamTrack
 import tempfile
 import av
-import numpy as np
 import cv2
-from ice import get_ice_servers
 
-COMMON_RTC_CONFIG = {"iceServers": get_ice_servers()}
 
 def identity(frame: av.VideoFrame) -> av.VideoFrame:
         return frame
@@ -23,13 +20,7 @@ available_processors = {
     "convert2gray": convert2gray,
 }
 
-from aiortc.contrib.media import MediaPlayer #Mo
-from functools import partial
 
-
-
-
-# Main streamlit application
 def main():
     st.title("Video Stream from File")
     method = st.sidebar.radio('Select stream', options=['Webcam', 'File'])
@@ -42,18 +33,14 @@ def main():
             temp_file = tempfile.NamedTemporaryFile(delete=False)
             temp_file.write(video_file.read())
             temp_file.close()
-            # Create video track from the saved file
-            video_track = FromFileVideoStreamTrack(temp_file.name) # To albo to
-            looped_player_factory = partial(MediaPlayer, file=temp_file.name, loop=True)
-            # Create WebRTC streamer
+            video_track = FromFileVideoStreamTrack(temp_file.name)
             webrtc_streamer(
                 key="video-file-stream",
                 mode=WebRtcMode.RECVONLY,
-                # source_video_track=video_track,
-                player_factory=looped_player_factory,
+                source_video_track=video_track,
                 media_stream_constraints={"video": True, "audio": False},
                 video_frame_callback=processor,
-                rtc_configuration=COMMON_RTC_CONFIG,
+                rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
         )
     else:
         webrtc_streamer(
@@ -61,7 +48,7 @@ def main():
             source_video_track=None,
             media_stream_constraints={"video": True, "audio": False},
             video_frame_callback=processor,
-            rtc_configuration=COMMON_RTC_CONFIG,
+            rtc_configuration={"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]},
         )
 
 # Run the application
