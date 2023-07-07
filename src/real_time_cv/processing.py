@@ -33,10 +33,6 @@ class ProcessorPlugin:
         self._ref_processor = None
         self._processors = {}
         
-    def _is_valid_processor(self, processor):
-        """TODO: Implement"""
-        return True
-    
     @property
     def ref_processor(self):
         if self._ref_processor is None:
@@ -51,17 +47,15 @@ class ProcessorPlugin:
         else:
             Warning("Register some processors first.")
         
-
     def register_ref_processor(self, processor):
-        if self._is_valid_processor(processor):
-            self._ref_processor = processor
+        self._ref_processor = processor
             
     def register_processor(self, name, processor):
         if self._processors.get(name):
             Warning("Processor with such name already exists. ")
             return
-        if self._is_valid_processor(processor):
-            self._processors[name] = processor
+        self._processors[name] = processor
+
 
 dummy_plugin = ProcessorPlugin()
 dummy_plugin.register_ref_processor(identity)

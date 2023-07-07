@@ -1,26 +1,11 @@
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer, WebRtcMode
-from stream import FromFileVideoStreamTrack
+from .stream import FromFileVideoStreamTrack
 import tempfile
-import av
-import cv2
-import time
-import threading
+from .processing import synchronize_processors, ProcessorPlugin, dummy_plugin
 
-sync_event = threading.Event()
-
-def synchronize_processors(ref_processor, processor):
-    def ref_processor_wrapper(*args):
-        sync_event.wait()
-        result = ref_processor(*args)
-        sync_event.clear()
-        return result
-    def processor_wrapper(*args):
-        result = processor(*args)
-        sync_event.set()
-        return result
-    return ref_processor_wrapper, processor_wrapper
-
+ICE_CONFIG = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
+DESIRED_PLAYING_STATE = True
 
 def make_raw_stream(mode, source_video_track):
     with st.sidebar:
@@ -57,34 +42,14 @@ def make_processors_view(raw_stream, ref_processor, processor):
             rtc_configuration=ICE_CONFIG,
             media_stream_constraints={"video": True, "audio": False},
         )
-        
 
-
-ICE_CONFIG = {"iceServers": [{"urls": ["stun:stun.l.google.com:19302"]}]}
-DESIRED_PLAYING_STATE = True
-
-
-def identity(frame: av.VideoFrame) -> av.VideoFrame:
-    return frame
-
-def convert2gray(frame: av.VideoFrame) -> av.VideoFrame:
-    image = frame.to_ndarray(format="bgr24")
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    time.sleep(1)
-    return av.VideoFrame.from_ndarray(gray, format="gray")
-        
-        
-available_processors = {
-    "identity": identity,
-    "convert2gray": convert2gray,
-}
-
-
-def main():
+def run(processor_plugin: ProcessorPlugin):
+    ref_processor = processor_plugin.ref_processor
+    available_processors = processor_plugin.available_processors
     method = st.sidebar.radio('Select stream', options=['Webcam', 'File'])
     processor_name = st.sidebar.selectbox("Select Processors:", list(available_processors.keys())) 
     processor = available_processors[processor_name]
-    ref_processor = identity # Tu bedzie mozliwosc ustawienia z zewnatrz
+    ref_processor = ref_processor
     is_sync = st.sidebar.checkbox("Synchronize processors")
     if is_sync:
         ref_processor, processor = synchronize_processors(ref_processor, processor)
@@ -113,6 +78,5 @@ def main():
             processor=processor
         )
 
-# Run the application
 if __name__ == "__main__":
-    main()
+    run(dummy_plugin)
