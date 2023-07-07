@@ -1,2 +1,2 @@
-# real-time-video
-A simple Flask application for visualisation of real-time CV models
+# Real Time CV
+Streamlit app based on [streamlit-webrtc](https://github.com/whitphx/streamlit-webrtc/tree/main).
