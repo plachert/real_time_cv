@@ -10,12 +10,17 @@ from .processing import dummy_plugin
 from .processing import ProcessorPlugin
 from .processing import synchronize_processors
 from .stream import FromFileVideoStreamTrack
+from .stream import FromImagesStreamTrack
 
-ICE_CONFIG = {'iceServers': [{'urls': ['stun:stun.l.google.com:19302']}]}
+DEFAULT_ICE_CONFIG = {
+    'iceServers': [
+        {'urls': ['stun:stun.l.google.com:19302']},
+    ],
+}
 DESIRED_PLAYING_STATE = None
 
 
-def make_raw_stream(mode, source_video_track):
+def make_raw_stream(mode, source_video_track, rtc_configuration):
     with st.sidebar:
         st.header('Raw Stream')
         ctx = webrtc_streamer(
@@ -24,12 +29,12 @@ def make_raw_stream(mode, source_video_track):
             source_video_track=source_video_track,
             desired_playing_state=DESIRED_PLAYING_STATE,
             media_stream_constraints={'video': True, 'audio': False},
-            rtc_configuration=ICE_CONFIG,
+            rtc_configuration=rtc_configuration,
         )
     return ctx
 
 
-def make_processors_view(raw_stream, ref_processor, processor):
+def make_processors_view(raw_stream, ref_processor, processor, rtc_configuration):
     col_reference, col_processor = st.columns(2)
     with col_reference:
         st.header('Reference')
@@ -39,7 +44,7 @@ def make_processors_view(raw_stream, ref_processor, processor):
             video_frame_callback=ref_processor,
             source_video_track=raw_stream.output_video_track,
             desired_playing_state=raw_stream.state.playing,
-            rtc_configuration=ICE_CONFIG,
+            rtc_configuration=rtc_configuration,
             media_stream_constraints={'video': True, 'audio': False},
         )
     with col_processor:
@@ -50,20 +55,30 @@ def make_processors_view(raw_stream, ref_processor, processor):
             video_frame_callback=processor,
             source_video_track=raw_stream.output_video_track,
             desired_playing_state=raw_stream.state.playing,
-            rtc_configuration=ICE_CONFIG,
+            rtc_configuration=rtc_configuration,
             media_stream_constraints={'video': True, 'audio': False},
         )
 
 
-def run(processor_plugin: ProcessorPlugin):
+def save_file(uploaded_file):
+    temp_file = tempfile.NamedTemporaryFile(delete=False)
+    temp_file.write(uploaded_file.getbuffer())
+    filename = temp_file.name
+    return filename
+
+
+def run(
+    processor_plugin: ProcessorPlugin = dummy_plugin,
+    rtc_configuration=DEFAULT_ICE_CONFIG,
+):
     ref_processor = processor_plugin.ref_processor
     available_processors = processor_plugin.available_processors
     method = st.sidebar.radio(
         'Select stream',
-        options=['File', 'Webcam'],
+        options=['File', 'Webcam', 'Images'],
     )
     processor_name = st.sidebar.selectbox(
-        'Select Processors:', list(available_processors.keys()),
+        'Select processor:', list(available_processors.keys()),
     )
     processor = available_processors[processor_name]
     ref_processor = ref_processor
@@ -78,12 +93,19 @@ def run(processor_plugin: ProcessorPlugin):
             'Upload a video file', type=['mp4', 'avi'],
         )
         if video_file:
-            temp_file = tempfile.NamedTemporaryFile(delete=False)
-            temp_file.write(video_file.getbuffer())
-            is_stream = True
-            filename = temp_file.name
+            filename = save_file(video_file)  # temp_file.name
             source_video_track = FromFileVideoStreamTrack(filename)
             mode = WebRtcMode.RECVONLY
+            is_stream = True
+    elif method == 'Images':
+        images_file = st.sidebar.file_uploader(
+            'Upload array of images', type=['npy'],
+        )
+        if images_file:
+            filename = save_file(images_file)
+            source_video_track = FromImagesStreamTrack(filename)
+            mode = WebRtcMode.RECVONLY
+            is_stream = True
     else:
         mode = WebRtcMode.SENDRECV
         source_video_track = None
@@ -92,13 +114,11 @@ def run(processor_plugin: ProcessorPlugin):
         raw_stream = make_raw_stream(
             mode=mode,
             source_video_track=source_video_track,
+            rtc_configuration=rtc_configuration,
         )
         make_processors_view(
             raw_stream=raw_stream,
             ref_processor=ref_processor,
             processor=processor,
+            rtc_configuration=rtc_configuration,
         )
-
-
-if __name__ == '__main__':
-    run(dummy_plugin)
