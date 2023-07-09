@@ -17,6 +17,7 @@ DESIRED_PLAYING_STATE = None
 
 def make_raw_stream(mode, source_video_track):
     with st.sidebar:
+        st.header('Raw Stream')
         ctx = webrtc_streamer(
             key='stream-org',
             mode=mode,
@@ -24,7 +25,6 @@ def make_raw_stream(mode, source_video_track):
             desired_playing_state=DESIRED_PLAYING_STATE,
             media_stream_constraints={'video': True, 'audio': False},
             rtc_configuration=ICE_CONFIG,
-            video_html_attrs={'hidden': True},
         )
     return ctx
 
@@ -32,6 +32,7 @@ def make_raw_stream(mode, source_video_track):
 def make_processors_view(raw_stream, ref_processor, processor):
     col_reference, col_processor = st.columns(2)
     with col_reference:
+        st.header('Reference')
         webrtc_streamer(
             key='stream-reference',
             mode=WebRtcMode.RECVONLY,
@@ -42,6 +43,7 @@ def make_processors_view(raw_stream, ref_processor, processor):
             media_stream_constraints={'video': True, 'audio': False},
         )
     with col_processor:
+        st.header('Processed')
         webrtc_streamer(
             key='stream-processor',
             mode=WebRtcMode.RECVONLY,
