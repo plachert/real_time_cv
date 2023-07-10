@@ -9,7 +9,7 @@ Streamlit app based on [streamlit-webrtc](https://github.com/whitphx/streamlit-w
     * [Processors](#processors)
 * [Getting Started](#getting-started)
     * [Installing](#installing)
-    * [Usage Examples](#usage-examples)
+    * [Examples](#examples)
 
 
 ##  Description
@@ -26,40 +26,13 @@ Tree types of streams can be used as an input:
 Currently streams are a fixed part of the code, that the user has no control over. If the provided solution turns out not to be flexible enough, it can be easily changed (please submit an issue if that is the case).
 
 ### Processors
-Processors are functions that operate on a frame (`av.VideoFrame`) and return a processed frame (also `av.Frame`). They are supposed to be provided by the user in ProcessorPlugin like so:
+Processors are functions that operate on a frame (`av.VideoFrame`) and return a processed frame (also `av.VideoFrame`). They are supposed to be provided by the user in ProcessorPlugin (see [Examples](#examples)). These functions serve as video callbacks in `webrtc-streamer` object and run in separate threads.
 
- ```python
- from __future__ import annotations
+`ref_processor` - the output of this processor is labeled as *Reference*
 
-import time
+`processor` - there can be more than one. They will show up in the selectbox `"Select processor"`. The output of this processor is labeled as *Processed*
 
-import av
-import cv2
-from real_time_cv.app import run
-from real_time_cv.processing import ProcessorPlugin
-
-
-def identity(frame: av.VideoFrame) -> av.VideoFrame:
-    return frame
-
-
-def convert2gray(frame: av.VideoFrame) -> av.VideoFrame:
-    image = frame.to_ndarray(format='bgr24')
-    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-    time.sleep(1)
-    return av.VideoFrame.from_ndarray(gray, format='gray')
-
-
-if __name__ == '__main__':
-    dummy_plugin = ProcessorPlugin()
-    dummy_plugin.register_ref_processor(identity) # There can be only one ref_processor
-    dummy_plugin.register_processor('convert to gray', convert2gray) # There can be more than one
-    run(dummy_plugin)
-```
-
-`ref_processor` - this will display frames on the left hand side (*Reference*)
-
-`processor` - there can be more than one. They will show up in the selectbox `"Select processor"`. Displays on the right hand side (*Processed*)
+The processed streams are independent unless we use synchronization mechanism (checkbox `"Synchronize processors"`). When it is checked the reference processor will wait for the other processor. This might be useful when comparing the quality of processors. Currently the synchronization is not symmetrical, which implies that the reference processor should outperform the other processor.
 
 ## Getting Started
 
@@ -79,7 +52,84 @@ Verify installation:
 >>>
 ```
 
-### Usage Examples
+### Examples
+1. Run this simple configuration as a streamlit app `streamlit run example.py`
+```python
+from __future__ import annotations
+
+import time
+
+import av
+import cv2
+from real_time_cv.app import run, DEFAULT_ICE_CONFIG
+from real_time_cv.processing import ProcessorPlugin
+
+
+def identity(frame: av.VideoFrame) -> av.VideoFrame:
+    return frame
+
+
+def convert2gray(frame: av.VideoFrame) -> av.VideoFrame:
+    image = frame.to_ndarray(format='bgr24')
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    time.sleep(1) # simulate heavy processing
+    return av.VideoFrame.from_ndarray(gray, format='gray')
+
+
+if __name__ == '__main__':
+    dummy_plugin = ProcessorPlugin()
+    dummy_plugin.register_ref_processor(identity) # There can be only one ref_processor
+    dummy_plugin.register_processor('convert to gray', convert2gray) # There can be more than one
+    run(
+        processor_plugin=dummy_plugin,
+        rtc_configuration=DEFAULT_ICE_CONFIG, # you can set your own rtc config (check https://github.com/whitphx/streamlit-webrtc/tree/main)
+        layout='vertical', # this controls the layout of the streams (ref/processor) ['vertical', 'horizontal']
+        )
+```
+
+2. Here is a more practical example - semantic segmentation with YOLOv8. It requires ultralytics - `pip install ultralytics` and a trained model (`examples/yolo_seg_model.pt`)
+
+```python
+from __future__ import annotations
+
+from pathlib import Path
+
+import av
+import streamlit as st
+from real_time_cv.app import run
+from real_time_cv.processing import ProcessorPlugin
+from ultralytics import YOLO
+
+HERE = Path(__file__).parent
+
+if 'model' in st.session_state:
+    model = st.session_state['model']
+else:
+    model_path = HERE / 'yolo_seg_model.pt'
+    model = YOLO(model_path)
+    st.session_state['model'] = model
+
+
+def identity(frame: av.VideoFrame) -> av.VideoFrame:
+    return frame
+
+
+def yolov8_segmentation(frame: av.VideoFrame) -> av.VideoFrame:
+    image = frame.to_ndarray(format='bgr24')
+    result = model(image)[0].plot()
+    return av.VideoFrame.from_ndarray(result, format='bgr24')
+
+
+if __name__ == '__main__':
+    dummy_plugin = ProcessorPlugin()
+    # There can be only one ref_processor
+    dummy_plugin.register_ref_processor(identity)
+    dummy_plugin.register_processor(
+        'yolov8_segmentation', yolov8_segmentation,
+    )  # There can be more than one
+    run(dummy_plugin)
+
+```
 
 ## Licence
 
