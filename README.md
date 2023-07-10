@@ -21,7 +21,7 @@ The application is supposed to be used as an installable package with processing
 Tree types of streams can be used as an input:
 - Webcam
 - File (video file that serves as a looped stream of frames)
-- Images (this will create a video like stream of images, each image will be displayed for 100 frames)
+- Images (this will create a video like stream of images, each image will be displayed for 100 frames). For now a numpy array of images is required (`dtype=np.uint8, shape=(N, H, W, C)`)
 
 Currently streams are a fixed part of the code, that the user has no control over. If the provided solution turns out not to be flexible enough, it can be easily changed (please submit an issue if that is the case).
 
