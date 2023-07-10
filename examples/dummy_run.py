@@ -21,6 +21,6 @@ def convert2gray(frame: av.VideoFrame) -> av.VideoFrame:
 
 if __name__ == '__main__':
     dummy_plugin = ProcessorPlugin()
-    dummy_plugin.register_ref_processor(identity)
-    dummy_plugin.register_processor('convert to gray', convert2gray)
+    dummy_plugin.register_ref_processor(identity) # There can be only one ref_processor
+    dummy_plugin.register_processor('convert to gray', convert2gray) # There can be more than one
     run(dummy_plugin)
