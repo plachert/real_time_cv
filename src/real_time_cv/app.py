@@ -20,7 +20,11 @@ DEFAULT_ICE_CONFIG = {
 DESIRED_PLAYING_STATE = None
 
 
-def make_raw_stream(mode, source_video_track, rtc_configuration):
+def make_raw_stream(
+    mode,
+    source_video_track,
+    rtc_configuration,
+):
     with st.sidebar:
         st.header('Raw Stream')
         ctx = webrtc_streamer(
@@ -34,9 +38,18 @@ def make_raw_stream(mode, source_video_track, rtc_configuration):
     return ctx
 
 
-def make_processors_view(raw_stream, ref_processor, processor, rtc_configuration):
-    col_reference, col_processor = st.columns(2)
-    with col_reference:
+def make_processors_view(
+    raw_stream,
+    ref_processor,
+    processor,
+    rtc_configuration,
+    layout,
+):
+    if layout == 'vertical':
+        ref_container, proc_container = st.container(), st.container()
+    else:
+        ref_container, proc_container = st.columns(2)
+    with ref_container:
         st.header('Reference')
         webrtc_streamer(
             key='stream-reference',
@@ -47,7 +60,7 @@ def make_processors_view(raw_stream, ref_processor, processor, rtc_configuration
             rtc_configuration=rtc_configuration,
             media_stream_constraints={'video': True, 'audio': False},
         )
-    with col_processor:
+    with proc_container:
         st.header('Processed')
         webrtc_streamer(
             key='stream-processor',
@@ -70,6 +83,7 @@ def save_file(uploaded_file):
 def run(
     processor_plugin: ProcessorPlugin = dummy_plugin,
     rtc_configuration=DEFAULT_ICE_CONFIG,
+    layout='vertical',
 ):
     ref_processor = processor_plugin.ref_processor
     available_processors = processor_plugin.available_processors
@@ -121,4 +135,5 @@ def run(
             ref_processor=ref_processor,
             processor=processor,
             rtc_configuration=rtc_configuration,
+            layout=layout,
         )
