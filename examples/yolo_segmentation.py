@@ -14,7 +14,6 @@ if 'model' in st.session_state:
     model = st.session_state['model']
 else:
     model_path = HERE / 'yolo_seg_model.pt'
-    print(model_path)
     model = YOLO(model_path)
     st.session_state['model'] = model
 
