@@ -82,7 +82,7 @@ def run(
     )
     processor = available_processors[processor_name]
     ref_processor = ref_processor
-    is_sync = st.sidebar.checkbox('Synchronize processors')
+    is_sync = st.sidebar.checkbox('Synchronize processors', value=False)
     if is_sync:
         ref_processor, processor = synchronize_processors(
             ref_processor, processor,
@@ -93,7 +93,7 @@ def run(
             'Upload a video file', type=['mp4', 'avi'],
         )
         if video_file:
-            filename = save_file(video_file)  # temp_file.name
+            filename = save_file(video_file)
             source_video_track = FromFileVideoStreamTrack(filename)
             mode = WebRtcMode.RECVONLY
             is_stream = True

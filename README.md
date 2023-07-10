@@ -1,6 +1,15 @@
 # Real Time CV
 Streamlit app based on [streamlit-webrtc](https://github.com/whitphx/streamlit-webrtc/tree/main) for visualising CV (Computer Vision) tasks in real time.
 
+## Table of Contents
+* [Description](#description)
+    * [Streams](#streams)
+    * [Processors](#processors)
+* [Getting Started](#getting-started)
+    * [Installing](#installing)
+    * [Usage Examples](#usage-examples)
+
+
 ##  Description
 The main goal of the app is to enable quick evaluation of CV models on real data in real time. It also provides an easy way to compare two models (or any other image processing) on real-time data by using a synchronization mechanism and displaying them side by side.
 
