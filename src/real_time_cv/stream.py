@@ -7,6 +7,10 @@ from aiortc.mediastreams import VideoStreamTrack
 from av import VideoFrame
 
 
+class InconsistentFramesShapes(Exception):
+    pass
+
+
 class FromFileVideoStreamTrack(VideoStreamTrack):
     """
     Generate frames from video file.
@@ -34,16 +38,27 @@ class FromImagesStreamTrack(VideoStreamTrack):
     Generate frames from images provided as a saved numpy array (N, H, W, C).
     """
 
-    def __init__(self, filename):
+    def __init__(self, filenames):
         super().__init__()
         self.counter = 0
         self.image_idx = 0
-        self.frames = np.load(filename)
+        self.frames = self._frames_from_filenames(filenames)
         self.frames = [
             VideoFrame.from_ndarray(
                 frame, 'bgr24',
             ) for frame in self.frames
         ]
+
+    def _frames_from_filenames(self, filenames):
+        frames = [
+            cv2.imread(filename)[..., :3]
+            for filename in filenames
+        ]  # remove alpha if png
+        shape = frames[0].shape
+        for frame in frames:
+            if shape != frame.shape:
+                raise InconsistentFramesShapes
+        return np.array(frames)
 
     async def recv(self):
         pts, time_base = await self.next_timestamp()

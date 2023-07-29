@@ -10,6 +10,7 @@ from .processing import ProcessorPlugin
 from .processing import synchronize_processors
 from .stream import FromFileVideoStreamTrack
 from .stream import FromImagesStreamTrack
+from .stream import InconsistentFramesShapes
 
 
 DEFAULT_ICE_CONFIG = {
@@ -107,14 +108,17 @@ def run(
     elif method == 'Images':
         image_files = st.sidebar.file_uploader(
             'Upload array of images',
-            type=['jpg', 'png', 'npy'],
+            type=['jpg', 'png'],
             accept_multiple_files=True,
         )
         if image_files:
             filenames = [save_file(image_file) for image_file in image_files]
-            source_video_track = FromImagesStreamTrack(filenames)
-            mode = WebRtcMode.RECVONLY
-            is_stream = True
+            try:
+                source_video_track = FromImagesStreamTrack(filenames)
+                mode = WebRtcMode.RECVONLY
+                is_stream = True
+            except InconsistentFramesShapes:
+                st.warning('All images should be of the same size.')
     else:
         mode = WebRtcMode.SENDRECV
         source_video_track = None
