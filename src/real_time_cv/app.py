@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import tempfile
-
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 from streamlit_webrtc import WebRtcMode
 
+from .file_utils import save_file
 from .processing import dummy_plugin
 from .processing import ProcessorPlugin
 from .processing import synchronize_processors
 from .stream import FromFileVideoStreamTrack
 from .stream import FromImagesStreamTrack
+
 
 DEFAULT_ICE_CONFIG = {
     'iceServers': [
@@ -71,13 +71,6 @@ def make_processors_view(
             rtc_configuration=rtc_configuration,
             media_stream_constraints={'video': True, 'audio': False},
         )
-
-
-def save_file(uploaded_file):
-    temp_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_file.write(uploaded_file.getbuffer())
-    filename = temp_file.name
-    return filename
 
 
 def run(
