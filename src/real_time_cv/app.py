@@ -105,12 +105,14 @@ def run(
             mode = WebRtcMode.RECVONLY
             is_stream = True
     elif method == 'Images':
-        images_file = st.sidebar.file_uploader(
-            'Upload array of images', type=['npy'],
+        image_files = st.sidebar.file_uploader(
+            'Upload array of images',
+            type=['jpg', 'png', 'npy'],
+            accept_multiple_files=True,
         )
-        if images_file:
-            filename = save_file(images_file)
-            source_video_track = FromImagesStreamTrack(filename)
+        if image_files:
+            filenames = [save_file(image_file) for image_file in image_files]
+            source_video_track = FromImagesStreamTrack(filenames)
             mode = WebRtcMode.RECVONLY
             is_stream = True
     else:
