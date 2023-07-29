@@ -31,7 +31,7 @@ class FromFileVideoStreamTrack(VideoStreamTrack):
 
 class FromImagesStreamTrack(VideoStreamTrack):
     """
-    Generate frames from images provided as saved numpy array (N, H, W, C).
+    Generate frames from images provided as a saved numpy array (N, H, W, C).
     """
 
     def __init__(self, filename):
