@@ -38,7 +38,6 @@ class FromImagesStreamTrack(VideoStreamTrack):
         super().__init__()
         self.counter = 0
         self.image_idx = 0
-        # np.random.randint(0, 256, (10, height, width, 3), dtype=np.uint8)
         self.frames = np.load(filename)
         self.frames = [
             VideoFrame.from_ndarray(
