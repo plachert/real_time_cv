@@ -1,16 +1,17 @@
 from __future__ import annotations
 
-import tempfile
-
 import streamlit as st
 from streamlit_webrtc import webrtc_streamer
 from streamlit_webrtc import WebRtcMode
 
+from .file_utils import save_file
 from .processing import dummy_plugin
 from .processing import ProcessorPlugin
 from .processing import synchronize_processors
 from .stream import FromFileVideoStreamTrack
 from .stream import FromImagesStreamTrack
+from .stream import InconsistentFramesShapes
+
 
 DEFAULT_ICE_CONFIG = {
     'iceServers': [
@@ -73,13 +74,6 @@ def make_processors_view(
         )
 
 
-def save_file(uploaded_file):
-    temp_file = tempfile.NamedTemporaryFile(delete=False)
-    temp_file.write(uploaded_file.getbuffer())
-    filename = temp_file.name
-    return filename
-
-
 def run(
     processor_plugin: ProcessorPlugin = dummy_plugin,
     rtc_configuration=DEFAULT_ICE_CONFIG,
@@ -112,14 +106,19 @@ def run(
             mode = WebRtcMode.RECVONLY
             is_stream = True
     elif method == 'Images':
-        images_file = st.sidebar.file_uploader(
-            'Upload array of images', type=['npy'],
+        image_files = st.sidebar.file_uploader(
+            'Upload array of images',
+            type=['jpg', 'png'],
+            accept_multiple_files=True,
         )
-        if images_file:
-            filename = save_file(images_file)
-            source_video_track = FromImagesStreamTrack(filename)
-            mode = WebRtcMode.RECVONLY
-            is_stream = True
+        if image_files:
+            filenames = [save_file(image_file) for image_file in image_files]
+            try:
+                source_video_track = FromImagesStreamTrack(filenames)
+                mode = WebRtcMode.RECVONLY
+                is_stream = True
+            except InconsistentFramesShapes:
+                st.warning('All images should be of the same size.')
     else:
         mode = WebRtcMode.SENDRECV
         source_video_track = None
