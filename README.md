@@ -18,7 +18,7 @@ The main goal of the app is to enable quick evaluation of CV models on real data
 The application is supposed to be used as an installable package with processing functions being registered by the user (see [Processors](#processors)).
 
 ### Streams
-Tree types of streams can be used as an input:
+Three types of streams can be used as an input:
 - Webcam
 - File (video file that serves as a looped stream of frames)
 - Images (this will create a video like stream of images, each image will be displayed for 100 frames). All uploaded images should be of the same size.
@@ -40,7 +40,7 @@ The processed streams are independent unless we use synchronization mechanism (c
 Run the following command in your virtual env.
 
 ```shell
-(venv) foo@bar:~$ pip install git+https://github.com/plachert/real_time_cv
+pip install git+https://github.com/plachert/real_time_cv
 ```
 
 Verify installation:
